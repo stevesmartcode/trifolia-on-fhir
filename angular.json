@@ -70,7 +70,7 @@
       "root": "libs/tof-lib",
       "sourceRoot": "libs/tof-lib/src",
       "projectType": "library",
-      "prefix": "trifolia-fhir",
+      "prefix": "tof",
       "architect": {
         "lint": {
           "builder": "@angular-devkit/build-angular:tslint",
@@ -96,7 +96,7 @@
       "root": "apps/client/",
       "sourceRoot": "apps/client/src",
       "projectType": "application",
-      "prefix": "trifolia-fhir",
+      "prefix": "tof",
       "schematics": {},
       "architect": {
         "build": {

@@ -51,7 +51,6 @@ import {ImplementationGuidesPanelComponent} from './structure-definition/impleme
 import {MappingModalComponent} from './structure-definition/element-definition-panel/mapping-modal/mapping-modal.component';
 import {ImportGithubPanelComponent} from './import/import-github-panel/import-github-panel.component';
 import {TreeModule} from 'ng2-tree';
-import {ExportGithubPanelComponent} from './export-github-panel/export-github-panel.component';
 import {ContextPanelWrapperComponent} from './structure-definition/context-panel-wrapper/context-panel-wrapper.component';
 import {ContextPanelR4Component} from './structure-definition/context-panel-wrapper/r4/context-panel-r4.component';
 import {ContextPanelStu3Component} from './structure-definition/context-panel-wrapper/stu3/context-panel-stu3.component';
@@ -66,6 +65,7 @@ import {AuthService} from './shared/auth.service';
 import {FhirService} from './shared/fhir.service';
 import {R4ResourceModalComponent} from './implementation-guide-wrapper/r4/resource-modal.component';
 import {STU3ResourceModalComponent} from './implementation-guide-wrapper/stu3/resource-modal.component';
+import { ExportGithubComponent } from './export/github/export-github.component';
 
 /**
  * This class is an HTTP interceptor that is responsible for adding an
@@ -201,8 +201,8 @@ export function init(configService: ConfigService, authService: AuthService, fhi
     ConceptCardComponent, ImplementationGuideViewComponent,
     OtherResourcesComponent, QuestionnairesComponent, QuestionnaireComponent, QuestionnaireItemModalComponent,
     ImplementationGuideWrapperComponent, RouteTransformerDirective, ImplementationGuidesPanelComponent,
-    MappingModalComponent, ImportGithubPanelComponent, ExportGithubPanelComponent, ContextPanelWrapperComponent, ContextPanelR4Component,
-    ContextPanelStu3Component, PublishComponent, IncludePanelComponent, BindingPanelComponent, R4ResourceModalComponent, STU3ResourceModalComponent
+    MappingModalComponent, ImportGithubPanelComponent, ContextPanelWrapperComponent, ContextPanelR4Component,
+    ContextPanelStu3Component, PublishComponent, IncludePanelComponent, BindingPanelComponent, R4ResourceModalComponent, STU3ResourceModalComponent, ExportGithubComponent
   ],
   imports: [
     RouterModule.forRoot(

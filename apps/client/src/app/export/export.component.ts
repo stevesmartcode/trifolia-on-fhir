@@ -11,11 +11,11 @@ import {Bundle, DomainResource, ImplementationGuide} from '../../../../../libs/t
 import {FileModel, GithubService} from '../shared/github.service';
 import {FhirService} from '../shared/fhir.service';
 import {Observable} from 'rxjs';
-import {ExportGithubPanelComponent} from '../export-github-panel/export-github-panel.component';
 import {debounceTime, distinctUntilChanged, map, switchMap, tap} from 'rxjs/operators';
 import {AuthService} from '../shared/auth.service';
 import {NgbTabChangeEvent} from '@ng-bootstrap/ng-bootstrap';
 import {getErrorString, getStringFromBlob} from '../../../../../libs/tof-lib/src/lib/helper';
+import {ExportGithubComponent} from './github/export-github.component';
 
 @Component({
   templateUrl: './export.component.html',
@@ -25,16 +25,14 @@ export class ExportComponent implements OnInit {
   public message: string;
   public socketOutput = '';
   private packageId;
-  public githubResourcesBundle: Bundle;
-  public githubCommitMessage: string;
   public searching = false;
   public activeTabId = 'html';
   public Globals = Globals;
 
-  @ViewChild('githubPanel', { static: true }) githubPanel: ExportGithubPanelComponent;
-
   public options = new ExportOptions();
   public selectedImplementationGuide: ImplementationGuide;
+
+  @ViewChild('github', { static: false }) exportGithubComponent: ExportGithubComponent;
 
   constructor(
     private authService: AuthService,
@@ -51,20 +49,6 @@ export class ExportComponent implements OnInit {
     this.options.downloadOutput = true;
   }
 
-  private async getImplementationGuideResources() {
-    this.message = 'Retrieving resources for the implementation guide';
-
-    const bundleResponse = await this.exportService.exportBundle({implementationGuideId: this.options.implementationGuideId, exportFormat: ExportFormats.Bundle}).toPromise();
-    const bundleJson = await getStringFromBlob(bundleResponse.body);
-
-    try {
-      this.githubResourcesBundle = <Bundle>JSON.parse(bundleJson);
-      this.message = '';
-    } catch (ex) {
-      this.message = 'Could not parse the bundle: ' + ex.message;
-    }
-  }
-
   public onTabChange(event: NgbTabChangeEvent) {
     this.activeTabId = event.nextId;
 
@@ -77,7 +61,6 @@ export class ExportComponent implements OnInit {
         break;
       case 'github':
         this.options.exportFormat = ExportFormats.GitHub;
-        this.getImplementationGuideResources();
         break;
       default:
         throw new Error('Unexpected tab selected. Cannot set export format.');
@@ -87,17 +70,11 @@ export class ExportComponent implements OnInit {
   public implementationGuideChanged(implementationGuide: ImplementationGuide) {
     this.selectedImplementationGuide = implementationGuide;
     this.options.implementationGuideId = implementationGuide ? implementationGuide.id : undefined;
-    this.githubResourcesBundle = null;
-    this.githubCommitMessage = null;
 
     const cookieKey = Globals.cookieKeys.exportLastImplementationGuideId + '_' + this.configService.fhirServer;
 
     if (implementationGuide && implementationGuide.id) {
       this.cookieService.put(cookieKey, implementationGuide.id);
-
-      if (this.options.exportFormat === ExportFormats.GitHub) {
-        this.getImplementationGuideResources();
-      }
     } else if (this.cookieService.get(cookieKey)) {
       this.cookieService.remove(cookieKey);
     }
@@ -144,54 +121,14 @@ export class ExportComponent implements OnInit {
     }
 
     if (this.options.exportFormat === ExportFormats.GitHub) {
-      if (!this.githubService.token || !this.githubResourcesBundle || !this.githubResourcesBundle.entry) {
+      if (!this.exportGithubComponent) {
         return true;
       }
 
-      const filtered = (this.githubResourcesBundle.entry || []).filter((entry) => {
-        return this.fhirService.getResourceGithubDetails(entry.resource).hasAllDetails();
-      });
-
-      if (filtered.length === 0 || !this.githubCommitMessage) {
-        return true;
-      }
-
-      return false;
+      return this.exportGithubComponent.exportDisabled;
     }
 
     return !this.options.responseFormat;
-  }
-
-  private exportGithub() {
-    const implementationGuide = (this.githubResourcesBundle.entry || []).find((entry) => entry.resource.resourceType === 'ImplementationGuide').resource;
-    const implementationGuideDetails = this.fhirService.getResourceGithubDetails(implementationGuide);
-
-    const queue = <DomainResource[]> (this.githubResourcesBundle.entry || [])
-      .filter((entry) => {
-        const details = this.fhirService.getResourceGithubDetails(entry.resource);
-        return !!(details.owner && details.repository && details.branch && details.path);
-      })
-      .filter((entry) => {
-        return !!this.githubPanel.checkedIds.find((id) => id === entry.resource.id);
-      })
-      .map((entry) => entry.resource);
-
-    const files = queue.map((resource) => {
-      const details = this.fhirService.getResourceGithubDetails(resource);
-      const content = details.path.endsWith('.xml') ? this.fhirService.serialize(resource) : JSON.stringify(resource, null, '\t');
-
-      return <FileModel>{
-        path: details.path,
-        content: content
-      };
-    });
-
-    this.githubService.updateContents(implementationGuideDetails.owner, implementationGuideDetails.repository, this.githubCommitMessage, files, implementationGuideDetails.branch)
-      .subscribe(() => {
-        this.message = 'Done exporting to GitHub';
-      }, (err) => {
-        this.message = getErrorString(err);
-      });
   }
 
   public export() {
@@ -224,7 +161,13 @@ export class ExportComponent implements OnInit {
             });
           break;
         case ExportFormats.GitHub:
-          this.exportGithub();
+          this.exportGithubComponent.export()
+            .then((results) => {
+              this.message = results.message;
+            })
+            .catch((err) => {
+              this.message = err.message;
+            });
           break;
       }
     } catch (ex) {
