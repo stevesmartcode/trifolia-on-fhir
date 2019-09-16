@@ -97,7 +97,8 @@ export class ExportGithubComponent implements OnInit, OnChanges {
     try {
       console.log('mapping zip');
 
-      await this.githubService.updateContents(this.ownerLogin, this.repositoryName, this.message, files, this.branch).toPromise();
+      await this.githubService.updateContents(this.ownerLogin, this.repositoryName, this.message, files, this.branch);
+
       return {
         success: true,
         message: 'Done exporting to GitHub'

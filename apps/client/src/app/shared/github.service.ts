@@ -402,76 +402,82 @@ export class GithubService {
     return this.http.patch<ReferenceUpdatedModel>(url, body, this.getOptions());
   }
 
+  private getContentType(fileName: string) {
+    const extension = fileName.substring(fileName.lastIndexOf('.') + 1).toLowerCase();
+
+    if (!extension) {
+      return 'text/plain';
+    }
+
+    switch (extension) {
+      case 'bmp':
+      case 'jpeg':
+      case 'jpg':
+      case 'tif':
+      case 'gif':
+      case 'giff':
+      case 'png':
+        return 'image/' + extension;
+      case 'html':
+        return 'text/html';
+      case 'md':
+        return 'text/markdown';
+      case 'txt':
+        return 'text/plain';
+      case 'css':
+        return 'text/css';
+      case 'woff':
+        return 'font/woff';
+      case 'eot':
+        return 'application/vnd.ms-fontobject';
+      case 'js':
+        return 'text/javascript';
+      case 'otf':
+        return 'font/opentype';
+      case 'json':
+      case 'xml':
+        return 'application/' + extension;
+      case 'ttf':
+        return 'application/x-font-ttf';
+      case 'svg':
+        return 'image/svg+xml';
+      case 'ico':
+        return 'image/x-icon';
+      default:
+        return 'application/octet-stream';
+    }
+  }
+
   public updateContents(ownerLogin: string, repositoryName: string, message: string, files: FileModel[], branchName = 'master') {
-    const queue = files.map(f => f);      // Make a copy of the array that represents the queue
-    const blobs = [];
-    const queueProcessCount = 50;
+    let baseTree: RepositoryTreeModel;
 
-    const timeoutPromise = (time: number) => {
-      return new Promise((resolve) => {
-        setTimeout(() => resolve(), time);
-      });
-    };
+    return this.fetchTree(ownerLogin, repositoryName, branchName).toPromise()
+      .then((results) => {
+        baseTree = results;
 
-    const processQueue = () => {
-      if (queue.length === 0) {
-        return Promise.resolve();
-      }
-
-      const promises = files
-        .splice(0, files.length > queueProcessCount ? queueProcessCount : files.length)
-        .map((file) => {
-          const url = `https://api.github.com/repos/${ownerLogin}/${repositoryName}/git/blobs`;
-          const body = {
-            content: file.content,
-            encoding: 'utf-8'
-          };
-          return this.http.post<BlobCreatedResponseModel>(url, body, this.getOptions()).toPromise();
-        });
-
-      return Promise.all(promises)
-        .then((fileResults) => {
-          fileResults.forEach((fr) => blobs.push(fr));
-          return timeoutPromise(5000);
-        })
-        .then(() => {
-          return processQueue();
-        });
-    };
-
-    return new Observable<any>((observer) => {
-      let baseTree;
-
-      processQueue()
-        .then((results) => {
-          return this.fetchTree(ownerLogin, repositoryName, branchName).toPromise();
-        })
-        .then((results) => {
-          baseTree = results;
-          const filesWithSha = files.map((file, index) => {
-            return <FileModel>{
+        const body = {
+          base_tree: baseTree.sha,
+          tree: files.map((file) => {
+            const mimeType = this.getContentType(file.path);
+            return {
               path: file.path,
-              sha: blobs[index].sha
+              mode: '100644',
+              type: 'blob',
+              content: `data:${mimeType};base64,${file.content}`
             };
-          });
+          })
+        };
 
-          return this.createTree(ownerLogin, repositoryName, results.sha, filesWithSha).toPromise();
-        })
-        .then((newTree) => {
-          return this.createCommit(ownerLogin, repositoryName, message, newTree.sha, baseTree.sha).toPromise();
-        })
-        .then((newCommit) => {
-          return this.updateHead(ownerLogin, repositoryName, newCommit.sha, branchName).toPromise();
-        })
-        .then(() => {
-          observer.next();
-          observer.complete();
-        })
-        .catch((err) => {
-          observer.error(err);
-          observer.complete();
-        });
-    });
+        const options = this.getOptions();
+        const url = `https://api.github.com/repos/${ownerLogin}/${repositoryName}/git/trees`;
+        return this.http.post<RepositoryTreeModel>(url, body, options).toPromise();
+      })
+      .then((newTree) => {
+        return this.createCommit(ownerLogin, repositoryName, message, newTree.sha, baseTree.sha).toPromise();
+      })
+      .then((newCommit) => {
+        return this.updateHead(ownerLogin, repositoryName, newCommit.sha, branchName).toPromise();
+      });
   }
 
   public updateContent(ownerLogin: string, repositoryName: string, path: string, content: string, message?: string, branchName?: string) {
