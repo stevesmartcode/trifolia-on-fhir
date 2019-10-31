@@ -64,6 +64,13 @@ a.disabled > i.fas {
   cursor: pointer;
 }
 
+div.fake-input:after {
+  font-family: "Font Awesome 5 Free";
+  content: "\f044";
+  margin-left: 5px;
+  cursor: pointer;
+}
+
 body > trifolia-fhir-root > div.container {
   position: fixed;
   top: 59px;

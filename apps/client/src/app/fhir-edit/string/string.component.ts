@@ -1,4 +1,4 @@
-import {Component, EventEmitter, Input, OnInit, Output, ViewChild} from '@angular/core';
+import {Component, ElementRef, EventEmitter, Input, OnInit, Output, ViewChild} from '@angular/core';
 import {CookieService} from 'angular2-cookie/core';
 import {NgModel} from '@angular/forms';
 import {Subject} from 'rxjs';
@@ -22,12 +22,21 @@ export class FhirStringComponent implements OnInit {
   @Input() disabled: boolean;
   @Input() pattern: string | RegExp;
   @Input() patternMessage: string;
+  @Input() clickToEdit: boolean;
 
-  @ViewChild('formGroupModel', { static: true })
+  @ViewChild('formGroupModel', { static: false, read: NgModel })
   private formGroupModel: NgModel;
 
-  @ViewChild('model', { static: true })
+  @ViewChild('formGroupModel', { static: false, read: ElementRef })
+  private formGroupModelElement: ElementRef;
+
+  @ViewChild('model', { static: false, read: NgModel })
   private model: NgModel;
+
+  @ViewChild('model', { static: false, read: ElementRef })
+  private modelElement: ElementRef;
+
+  public isEditing = false;
 
   /**
    * Indicates that the value of the component should be remembered in cookies
@@ -42,6 +51,10 @@ export class FhirStringComponent implements OnInit {
 
     this.changeEvent.pipe(debounceTime(500))
       .subscribe((value: string) => this.change.emit(value));
+  }
+
+  public get showEditable(): boolean {
+    return !this.clickToEdit || this.isEditing;
   }
 
   public get value() {
@@ -80,6 +93,20 @@ export class FhirStringComponent implements OnInit {
         this.cookieService.put(this.cookieKey, newValue);
       }
     }
+  }
+
+  public activateEdit() {
+    this.isEditing = true;
+
+    setTimeout(() => {
+      if (this.formGroupModelElement) {
+        this.formGroupModelElement.nativeElement.focus();
+      }
+
+      if (this.modelElement) {
+        this.modelElement.nativeElement.focus();
+      }
+    }, 100);
   }
 
   ngOnInit() {

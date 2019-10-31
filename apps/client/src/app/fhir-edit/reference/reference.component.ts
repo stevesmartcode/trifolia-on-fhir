@@ -1,4 +1,4 @@
-import {Component, EventEmitter, Input, OnInit, Output} from '@angular/core';
+import {Component, ElementRef, EventEmitter, Input, OnInit, Output, ViewChild} from '@angular/core';
 import {NgbModal} from '@ng-bootstrap/ng-bootstrap';
 import {Globals} from '../../../../../../libs/tof-lib/src/lib/globals';
 import {ResourceReference} from '../../../../../../libs/tof-lib/src/lib/stu3/fhir';
@@ -23,11 +23,20 @@ export class FhirReferenceComponent implements OnInit {
   @Input() public hideDisplay = false;
   @Input() public prependIconClass: string;
   @Input() public prependIconTooltip: string;
+  @Input() public clickToEdit = false;
 
   @Output() public change = new EventEmitter<any>();
   private changeDebouncer = new Subject();
 
+  @ViewChild('standardReference', { static: false, read: ElementRef }) standardReference: ElementRef;
+  @ViewChild('standardDisplay', { static: false, read: ElementRef }) standardDisplay: ElementRef;
+  @ViewChild('formReference', { static: false, read: ElementRef }) formReference: ElementRef;
+  @ViewChild('formDisplay', { static: false, read: ElementRef }) formDisplay: ElementRef;
+  @ViewChild('standardCanonical', { static: false, read: ElementRef }) standardCanonical: ElementRef;
+  @ViewChild('formCanonical', { static: false, read: ElementRef }) formCanonical: ElementRef;
+
   public Globals = Globals;
+  public isEditing = false;
 
   constructor(
     private modalService: NgbModal) {
@@ -35,6 +44,10 @@ export class FhirReferenceComponent implements OnInit {
     this.changeDebouncer
       .debounceTime(100)
       .subscribe((v) => this.change.emit(v));
+  }
+
+  get showEditable(): boolean {
+    return !this.clickToEdit || this.isEditing;
   }
 
   get reference(): string {
@@ -85,6 +98,28 @@ export class FhirReferenceComponent implements OnInit {
       this.parentObject[this.propertyName].display = value;
       this.changeDebouncer.next(this.parentObject[this.propertyName]);
     }
+  }
+
+  activateEditable() {
+    this.isEditing = true;
+
+    setTimeout(() => {
+      if (this.standardReference) {
+        this.standardReference.nativeElement.focus();
+      }
+
+      if (this.formReference) {
+        this.formReference.nativeElement.focus();
+      }
+
+      if (this.standardCanonical) {
+        this.standardCanonical.nativeElement.focus();
+      }
+
+      if (this.formCanonical) {
+        this.formCanonical.nativeElement.focus();
+      }
+    }, 100);
   }
 
   selectReference() {

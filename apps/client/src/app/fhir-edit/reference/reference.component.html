@@ -1,9 +1,9 @@
-<!-- standard reference -->
+<!-- Standard reference, form group -->
 <div class="form-group" *ngIf="isFormGroup && !isCanonical && parentObject">
   <label *ngIf="title">{{title}}</label>
-  <div class="input-group">
-    <input type="text" class="form-control" [class.is-invalid]="required && !reference" (change)="change.emit()" [disabled]="disabled" [(ngModel)]="reference" placeholder="Reference" />
-    <input type="text" class="form-control" *ngIf="!hideDisplay" [class.is-invalid]="required && !display" (change)="change.emit()" [disabled]="disabled" [(ngModel)]="display" placeholder="Display" />
+  <div class="input-group" *ngIf="showEditable">
+    <input type="text" class="form-control" #formReference [class.is-invalid]="required && !reference" (change)="change.emit()" [disabled]="disabled" [(ngModel)]="reference" placeholder="Reference" />
+    <input type="text" class="form-control" #formDisplay *ngIf="!hideDisplay" [class.is-invalid]="required && !display" (change)="change.emit()" [disabled]="disabled" [(ngModel)]="display" placeholder="Display" />
     <div class="input-group-append">
       <span *ngIf="prependIconClass" class="input-group-text">
         <i [attr.class]="prependIconClass" [ngbTooltip]="prependIconTooltip"></i>
@@ -16,13 +16,17 @@
       </button>
     </div>
   </div>
+  <div class="fake-input" *ngIf="!showEditable" (click)="activateEditable()">{{reference}}</div>
 </div>
-<div class="input-group" *ngIf="!isFormGroup && !isCanonical && parentObject">
+
+<!-- Standard reference, not a form group -->
+<div class="fake-input" *ngIf="!showEditable && !isFormGroup && !isCanonical" (click)="activateEditable()">{{reference}} {{display}}</div>
+<div class="input-group" *ngIf="!isFormGroup && !isCanonical && parentObject && showEditable">
   <div class="input-group-prepend" *ngIf="title">
     <span class="input-group-text" *ngIf="!required">{{title}}</span>
   </div>
-  <input type="text" class="form-control" [class.is-invalid]="required && !reference" (change)="change.emit()" [disabled]="disabled" [(ngModel)]="reference" placeholder="Reference" />
-  <input type="text" class="form-control" *ngIf="!hideDisplay" [class.is-invalid]="required && !display" (change)="change.emit()" [disabled]="disabled" [(ngModel)]="display" placeholder="Display" />
+  <input type="text" class="form-control" #standardReference [class.is-invalid]="required && !reference" (change)="change.emit()" [disabled]="disabled" [(ngModel)]="reference" placeholder="Reference" />
+  <input type="text" class="form-control" #standardDisplay *ngIf="!hideDisplay" [class.is-invalid]="required && !display" (change)="change.emit()" [disabled]="disabled" [(ngModel)]="display" placeholder="Display" />
   <div class="input-group-append">
     <span *ngIf="prependIconClass" class="input-group-text"><i [attr.class]="prependIconClass" [ngbTooltip]="prependIconTooltip"></i></span>
     <button type="button" class="btn btn-secondary" title="Clear the reference" (click)="clear()" [disabled]="disabled">
@@ -34,11 +38,11 @@
   </div>
 </div>
 
-<!-- canonical reference -->
+<!-- Canonical URL reference, form group -->
 <div class="form-group" *ngIf="isFormGroup && isCanonical && parentObject">
   <label *ngIf="title">{{title}}</label>
-  <div class="input-group">
-    <input type="text" class="form-control" [class.is-invalid]="required && !parentObject[propertyName]" (change)="change.emit()" [disabled]="disabled" [(ngModel)]="parentObject[propertyName]" placeholder="Canonical URL" />
+  <div class="input-group" *ngIf="showEditable">
+    <input type="text" class="form-control" #formCanonical [class.is-invalid]="required && !parentObject[propertyName]" (change)="change.emit()" [disabled]="disabled" [(ngModel)]="parentObject[propertyName]" placeholder="Canonical URL" />
     <div class="input-group-append">
       <span *ngIf="prependIconClass" class="input-group-text">
         <i [attr.class]="prependIconClass" [ngbTooltip]="prependIconTooltip"></i>
@@ -51,12 +55,16 @@
       </button>
     </div>
   </div>
+  <div class="fake-input" *ngIf="!showEditable" (click)="activateEditable()">{{parentObject[propertyName]}}</div>
 </div>
-<div class="input-group" *ngIf="!isFormGroup && isCanonical && parentObject">
+
+<!-- Canonical URL reference, not a form group -->
+<div class="fake-input" *ngIf="!showEditable && !isFormGroup && isCanonical" (click)="activateEditable()">{{parentObject[propertyName]}}</div>
+<div class="input-group" *ngIf="!isFormGroup && isCanonical && parentObject && showEditable">
   <div class="input-group-prepend" *ngIf="title">
     <span class="input-group-text" *ngIf="!required">{{title}}</span>
   </div>
-  <input type="text" class="form-control" [class.is-invalid]="required && !parentObject[propertyName]" (change)="change.emit()" [disabled]="disabled" [(ngModel)]="parentObject[propertyName]" placeholder="Canonical URL" />
+  <input type="text" class="form-control" #standardCanonical [class.is-invalid]="required && !parentObject[propertyName]" (change)="change.emit()" [disabled]="disabled" [(ngModel)]="parentObject[propertyName]" placeholder="Canonical URL" />
   <div class="input-group-append">
     <span *ngIf="prependIconClass" class="input-group-text"><i [attr.class]="prependIconClass" [ngbTooltip]="prependIconTooltip"></i></span>
     <button type="button" class="btn btn-secondary" title="Clear the reference" (click)="clear()" [disabled]="disabled">

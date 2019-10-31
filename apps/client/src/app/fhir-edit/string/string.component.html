@@ -1,33 +1,38 @@
+<!-- Form group -->
 <div class="form-group" *ngIf="isFormGroup && parentObject">
-    <label>
-        <span>{{title || propertyName}} </span>
-        <app-tooltip-icon [tooltipPath]="tooltipPath" [tooltipKey]="tooltipKey"></app-tooltip-icon>
-    </label>
+  <label>
+    <span>{{title || propertyName}} </span>
+    <app-tooltip-icon [tooltipPath]="tooltipPath" [tooltipKey]="tooltipKey"></app-tooltip-icon>
+  </label>
 
-    <input type="text" class="form-control"
-           #formGroupModel="ngModel"
-           placeholder="{{placeholder}}"
-           [disabled]="disabled"
-           [pattern]="pattern"
-           [(ngModel)]="value"
-           (keyup)="changeEvent.next(parentObject[propertyName])"
-           [class.is-invalid]="!isValid" />
-
-    <span class="help-block" *ngIf="value && patternMessage && formGroupModel.errors?.pattern">{{patternMessage}}</span>
+  <input type="text" class="form-control"
+         [hidden]="!showEditable"
+         #formGroupModel="ngModel"
+         placeholder="{{placeholder}}"
+         [disabled]="disabled"
+         [pattern]="pattern"
+         [(ngModel)]="value"
+         (keyup)="changeEvent.next(parentObject[propertyName])"
+         [class.is-invalid]="!isValid"/>
+  <div class="fake-input" (click)="activateEdit()">{{parentObject[propertyName]}}</div>
+  <span class="help-block" *ngIf="value && patternMessage && formGroupModel.errors?.pattern">{{patternMessage}}</span>
 </div>
-<div [class.input-group]="title" *ngIf="!isFormGroup && parentObject">
-    <div class="input-group-addon" *ngIf="title">
-        <span>{{title}} </span>
-        <app-tooltip-icon [tooltipPath]="tooltipPath" [tooltipKey]="tooltipKey"></app-tooltip-icon>
-    </div>
-    <input type="text" class="form-control"
-           #model="ngModel"
-           placeholder="{{placeholder}}"
-           [disabled]="disabled"
-           [pattern]="pattern"
-           [(ngModel)]="value"
-           (keyup)="changeEvent.next(parentObject[propertyName])"
-           [class.is-invalid]="!isValid" />
 
-    <span class="help-block" *ngIf="value && patternMessage && model.errors?.pattern">{{patternMessage}}</span>
+<!-- Not a form group -->
+<div class="fake-input" *ngIf="!showEditable" (click)="activateEdit()">{{parentObject[propertyName]}}</div>
+<div [class.input-group]="title" *ngIf="!isFormGroup && parentObject && showEditable">
+  <div class="input-group-addon" *ngIf="title">
+    <span>{{title}} </span>
+    <app-tooltip-icon [tooltipPath]="tooltipPath" [tooltipKey]="tooltipKey"></app-tooltip-icon>
+  </div>
+  <input type="text" class="form-control"
+         #model="ngModel"
+         placeholder="{{placeholder}}"
+         [disabled]="disabled"
+         [pattern]="pattern"
+         [(ngModel)]="value"
+         (keyup)="changeEvent.next(parentObject[propertyName])"
+         [class.is-invalid]="!isValid"/>
+
+  <span class="help-block" *ngIf="value && patternMessage && model.errors?.pattern">{{patternMessage}}</span>
 </div>
