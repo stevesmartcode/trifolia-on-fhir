@@ -8,6 +8,7 @@ import {map} from 'rxjs/operators';
 export class PractitionerService {
 
   constructor(private http: HttpClient) {
+    console.log("PRACTIONER SERVICE INITIATED")
   }
 
   public getUsers(content?: string, name?: string, email?: string, id?: string) {
@@ -33,6 +34,8 @@ export class PractitionerService {
   }
 
   public getMe(): Observable<Practitioner> {
+      console.log("IN PRACTIONER SERVICE.. about to call the service");
+      console.log("PERSON OBJ");
     return this.http.get('/api/practitioner/me')
       .pipe(map(personObj => new Practitioner(personObj)));
   }

@@ -19,9 +19,11 @@ export class PractitionerController extends BaseFhirController {
   resourceType = 'Practitioner';
 
   protected readonly logger = new TofLogger(PractitionerController.name);
+  private prac: Promise<Practitioner>;
 
   constructor(protected httpService: HttpService, protected configService: ConfigService) {
     super(httpService, configService);
+    this.logger.log("PRACTIONER CONTROLLER LOADED");
   }
 
   @Post('me')
@@ -85,7 +87,13 @@ export class PractitionerController extends BaseFhirController {
 
   @Get('me')
   public getMe(@User() user: ITofUser, @FhirServerBase() fhirServerBase: string, @Query('resolveIfNotFound') resolveIfNotFound = false): Promise<Practitioner> {
-    return super.getMyPractitioner(user, fhirServerBase, resolveIfNotFound);
+    this.logger.log("PRACTIONER GET ME");
+    this.logger.log("PRACTIONER GET ME USER " + user);
+
+    this.prac = super.getMyPractitioner(user, fhirServerBase, resolveIfNotFound);
+    this.logger.log("PRACTIONER " + this.prac);
+
+    return this.prac;
   }
 
   @Get('user')

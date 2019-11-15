@@ -31,6 +31,7 @@ export class HttpStrategy extends PassportStrategy(Strategy) {
       };
 
       try {
+
         const results = await this.httpService.request<ITofUser>(options).toPromise();
 
         this.logger.log(`Successfully retrieved user info for code ${token}`);

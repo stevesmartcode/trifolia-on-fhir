@@ -66,6 +66,7 @@ import {AuthService} from './shared/auth.service';
 import {FhirService} from './shared/fhir.service';
 import {R4ResourceModalComponent} from './implementation-guide-wrapper/r4/resource-modal.component';
 import {STU3ResourceModalComponent} from './implementation-guide-wrapper/stu3/resource-modal.component';
+import { OAuthModule, OAuthStorage } from 'angular-oauth2-oidc';
 
 /**
  * This class is an HTTP interceptor that is responsible for adding an
@@ -77,7 +78,16 @@ export class AddHeaderInterceptor implements HttpInterceptor {
   }
 
   intercept(req: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
+
+    console.log("LOCAL STORAGE FROM INTERCEPTER");
+    console.log(localStorage);
+
     const tokenExpiresAt = localStorage.getItem('expires_at');
+
+    console.log(tokenExpiresAt);
+    console.log(tokenExpiresAt && new Date().getTime() < JSON.parse(tokenExpiresAt));
+
+
     const token = tokenExpiresAt && new Date().getTime() < JSON.parse(tokenExpiresAt) ? localStorage.getItem('token') : undefined;
     const fhirServer = localStorage.getItem('fhirServer');
     let headers = req.headers;
@@ -89,6 +99,7 @@ export class AddHeaderInterceptor implements HttpInterceptor {
     }
 
     if (req.url.startsWith('/api/')) {
+
       headers = headers.set('Cache-Control', 'no-cache');
 
       if (fhirServer) {
@@ -107,6 +118,8 @@ export class AddHeaderInterceptor implements HttpInterceptor {
         headers = headers.delete('ignoreContext');
       }
     }
+
+
 
     return next.handle(req.clone({ headers: headers }));
   }
@@ -230,7 +243,8 @@ export function init(configService: ConfigService, authService: AuthService, fhi
     SharedModule,
     SharedUiModule,
     FhirEditModule,
-    ModalsModule
+    ModalsModule,
+    OAuthModule.forRoot()
   ],
   providers: [
     {
@@ -246,6 +260,9 @@ export function init(configService: ConfigService, authService: AuthService, fhi
     }, {
       provide: CookieService,
       useFactory: cookieServiceFactory
+    }, {
+      provide: OAuthStorage,
+      useValue: localStorage
     }
   ],
   bootstrap: [AppComponent]

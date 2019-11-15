@@ -12,12 +12,12 @@
     "maxRequestSizeMegabytes": 50
   },
   "auth": {
-    "clientId": "",
-    "domain": "",
-    "scope": "",
-    "secret": "",
-    "issuer": "",
-    "userInfoUrl": ""
+    "clientId": "myapp",
+    "domain": "http://localhost/",
+    "scope": "openid profile name nickname email",
+    "secret": "3ef2cda3-20cb-4b39-9481-629c18ec0fdd",
+    "issuer": "http://localhost:8080/auth/realms/ToF",
+    "userInfoUrl": "http://localhost:8080/auth/realms/ToF/protocol/openid-connect/userinfo"
   },
   "import": {
     "phinVadsUrl": "https://phinvads.cdc.gov/vocabService/v2"
