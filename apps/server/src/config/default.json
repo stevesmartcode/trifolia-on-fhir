@@ -12,12 +12,12 @@
     "maxRequestSizeMegabytes": 50
   },
   "auth": {
-    "clientId": "myapp",
+    "clientId": "0oa1v8admyhtOg2ro357",
     "domain": "http://localhost/",
     "scope": "openid profile name nickname email",
-    "secret": "3ef2cda3-20cb-4b39-9481-629c18ec0fdd",
-    "issuer": "http://localhost:8080/auth/realms/ToF",
-    "userInfoUrl": "http://localhost:8080/auth/realms/ToF/protocol/openid-connect/userinfo"
+    "secret": "CO-MYV2IjFAazYMObpP-ReeBHxADgf1lrYqQ-Glr",
+    "issuer": "https://lantanagroup.okta.com/oauth2/default",
+    "userInfoUrl": "https://lantanagroup.okta.com/oauth2/default/userinfo"
   },
   "import": {
     "phinVadsUrl": "https://phinvads.cdc.gov/vocabService/v2"

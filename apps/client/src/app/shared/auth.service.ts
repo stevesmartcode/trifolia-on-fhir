@@ -12,6 +12,7 @@ import {NgbModal} from '@ng-bootstrap/ng-bootstrap';
 import {addPermission} from '../../../../../libs/tof-lib/src/lib/helper';
 import {GroupService} from './group.service';
 import {map} from 'rxjs/operators';
+import { connectableObservableDescriptor } from 'rxjs/internal/observable/ConnectableObservable';
 
 @Injectable()
 export class AuthService {
@@ -57,40 +58,32 @@ export class AuthService {
 
 
     if (this.configService.config && this.configService.config.auth) {
-      /*this.auth0 = new auth0.WebAuth({
-        clientID: this.configService.config.auth.clientId,
-        domain: this.configService.config.auth.domain,
-        responseType: 'token',
-        redirectUri: location.origin + '/login?pathname=' + encodeURIComponent(location.pathname),
-        scope: this.configService.config.auth.scope
-      });*/
-      // URL of the SPA to redirect the user to after login
-
-      // The SPA's id. The SPA is registerd with this id at the auth-server
-
-      // set the scope for the permissions the client should request
-      // The first three are defined by OIDC. The 4th is a usecase-specific one
-
-      // set to true, to receive also an id_token via OpenId Connect (OIDC) in addition to the
-      // OAuth2-based access_token
-
-        // Use setStorage to use sessionStorage or another implementation of the TS-type Storage
-      // instead of localStorage
-
-      // Discovery Document of your AuthServer as defined by OIDC
-      //let url = 'https://oauth.lantanagroup.com/identity/.well-known/openid-configuration'; //https://steyer-identity-server.azurewebsites.net/identity/.well-known/openid-configuration';
-
-
-
       const config = new AuthConfig();
+
+//KEYCLOAK CONFIGURATION
       config.issuer = 'http://localhost:8080/auth/realms/ToF';
       config.clientId = 'myapp';
       config.redirectUri = location.origin + '/login?pathname=' + encodeURIComponent(location.pathname);
+      config.logoutUrl = location.origin + '/logout';
       config.scope = this.configService.config.auth.scope;
       config.responseType = 'id_token token';
      // config.sessionChecksEnabled = true;
       config.oidc = true;
       config.requestAccessToken = true;
+
+
+/*
+config.issuer = 'https://lantanagroup.okta.com/oauth2/default';
+config.clientId = '0oa1v8admyhtOg2ro357';
+config.redirectUri = location.origin + '/login?pathname=' + encodeURIComponent(location.pathname);
+config.logoutUrl = 'https://lantanagroup.okta.com/oauth2/default/v1/logout';
+
+config.scope = this.configService.config.auth.scope;
+config.responseType = 'id_token token';
+// config.sessionChecksEnabled = true;
+config.oidc = true;
+config.requestAccessToken = true;
+*/
 
       this.oauthService.setStorage(localStorage);
 
@@ -100,14 +93,8 @@ export class AuthService {
 
       this.oauthService.loadDiscoveryDocument().then(() => {
          this.oauthService.tryLogin().then(() => {
-            console.log("IS AUTHENTICATED FROM TRY LOGIN");
-            console.log(this.oauthService.hasValidAccessToken());
-           console.log(this.oauthService.hasValidIdToken());
 
            if(this.oauthService.hasValidAccessToken()){
-             console.log("Success! Authenticated");
-
-             console.log(this.isAuthenticated());
              this.setSession();
              this.handleAuthentication();
            }
@@ -142,10 +129,11 @@ export class AuthService {
   }
 
   public login(): void {
+    console.log("LOGIN CALLED");
     if (!this.oauthService) {
       return;
     }
-
+    console.log("ABOUT TO INTIATE IMPLICITY FLOW");
     this.oauthService.initImplicitFlow();
 
 
@@ -162,7 +150,7 @@ export class AuthService {
       this.loggingIn = true;
       this.authError = undefined;
 
-      this.setSession();
+      //this.setSession();
 
 
       this.getProfile()
@@ -189,27 +177,37 @@ export class AuthService {
   }
 
   public logout(): void {
+
+    console.log("LOGOUT CALLED");
     // Remove tokens and expiry time from localStorage
+
+    /*
     localStorage.removeItem('token');
     localStorage.removeItem('id_token');
+    localStorage.removeItem('access_token');
     localStorage.removeItem('expires_at');
     this.userProfile = null;
     this.practitioner = null;
     this.authExpiresAt = null;
     this.socketService.authInfoSent = false;
-
+    
+*/
     if (this.authTimeout) {
       clearTimeout(this.authTimeout);
     }
 
     if (this.oauthService) {
+      //this.oauthService.logoutUrl = location.origin + '/logout';
+      this.oauthService.logOut();
 
     }
 
     // Go back to the home route
     // noinspection JSIgnoredPromiseFromCall
+    /* Makesh 11/19
     this.router.navigate([`/${this.configService.fhirServer}/home`]);
     this.authChanged.emit();
+    */
   }
 
   public isAuthenticated(): boolean {
@@ -239,17 +237,12 @@ export class AuthService {
     this.userProfile = await this.getAuthUserInfo(accessToken);
 
     try {
-      console.log("ABOUT TO CALL GET ME");
 
       this.practitioner = await this.practitionerService.getMe().toPromise();
     } catch (ex) {
       console.error(ex);
       this.practitioner = null;
     }
-
-    console.log("AFTER GET USER INFO")
-    console.log(this.userProfile);
-    console.log(this.practitioner);
 
     try {
       this.groups = await this.groupService.getMembership()
@@ -283,6 +276,30 @@ export class AuthService {
     if (!this.oauthService) {
       return;
     }
+
+
+    const expiresIn = (this.authExpiresAt - new Date().getTime()) / 1000;
+
+    if (expiresIn > this.fiveMinutesInSeconds) {
+      if (this.authTimeout) {
+        clearTimeout(this.authTimeout);
+      }
+
+      const nextTimeout = (expiresIn - this.fiveMinutesInSeconds) * 1000;
+      this.authTimeout = setTimeout(() => {
+        this.authTimeout = null;
+        /*this.auth0.checkSession({
+          scope: this.configService.config.auth.scope
+        }, (err, nextAuthResult) => {
+          if (err) {
+            console.log(err);
+            alert('An error occurred while renewing your authentication session');
+          } else {
+            this.setSession(nextAuthResult);
+          }
+        });*/
+      }, nextTimeout);
+    }
   }
 
   private setSession(): void {
@@ -297,25 +314,6 @@ export class AuthService {
     console.log(this.isAuthenticated());
 
     if(this.isAuthenticated()) {
-      console.log(this.oauthService.hasValidAccessToken());
-      console.log(this.oauthService.hasValidIdToken());
-
-      console.log("token:" + this.oauthService.getAccessToken());
-      console.log("id token:" + this.oauthService.getIdToken());
-
-
-
-      console.log("LOCAL STORAGE IN SET SESSSION");
-      console.log(localStorage);
-      console.log(localStorage.length);
-      console.log(localStorage.key(0));
-      console.log(localStorage.key(1));
-      console.log(localStorage.key(2));
-      console.log(localStorage.key(3));
-      console.log(localStorage.key(4));
-      console.log(localStorage.key(5));
-      console.log("****");
-
     }
 
     this.authExpiresAt = JSON.parse(expiresAt);

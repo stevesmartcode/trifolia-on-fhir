@@ -16,6 +16,7 @@ export class LoginComponent implements OnInit {
   }
 
   ngOnInit() {
+
     if (this.route.snapshot && this.route.snapshot.fragment) {
       const fragmentParams = this.route.snapshot.fragment.split('&')
         .filter((param) => param.indexOf('=') > 0)
